@@ -1,5 +1,7 @@
-using DataFrames
 using CSV
+using DataFrames
+using Dates
+using UnicodePlots
 
 data_dir =
 prior_file = 
@@ -16,4 +18,10 @@ CSV.write(joinpath(work_dir, "accessions.csv"), accessions)
 accessions = sorted_counts
 filter(x->x.nrow > 1, accessions)
 vdf.IDL_City |> unique |> sort .|> println;
+vdf.IDL_age |> histogram
+vdf.IDL_age |> boxplot
 
+filter(x->occursin("0",x), vdf.Accession_Number |> skipmissing) |> unique |> length
+
+
+Dates.DateTime.(skipmissing(vdf.IDL_specimen_collection_date), "mm/dd/yyyy") |> extrema
