@@ -7,7 +7,13 @@ variant_file =
 
 work_dir =
 
-vdf = CSV.read(joinpath(data_dir, variant_file), DataFrame, select=[:Accession_Number])
-accessions = sort(combine(groupby(vdf, :Accession_Number), nrow), :nrow, rev=true)
+function sorted_counts(df, col)
+	sort(combine(groupby(df, col), nrow), :nrow, rev=true)
+end
+
+vdf = CSV.read(joinpath(data_dir, variant_file), DataFrame)
 CSV.write(joinpath(work_dir, "accessions.csv"), accessions)
+accessions = sorted_counts
+filter(x->x.nrow > 1, accessions)
+vdf.IDL_City |> unique |> sort .|> println;
 
