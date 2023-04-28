@@ -15,7 +15,7 @@ function sorted_counts(df, col)
 	sort(combine(groupby(df, col), nrow), :nrow, rev=true)
 end
 
-vdf = CSV.read(joinpath(data_dir, variant_file), DataFrame)
+vdf = CSV.File(joinpath(data_dir, variant_file), dateformat="mm/dd/yyyy") |> DataFrame
 CSV.write(joinpath(work_dir, "accessions.csv"), accessions)
 accessions = sorted_counts
 filter(x->x.nrow > 1, accessions)
@@ -48,3 +48,7 @@ end
 
 data_dictionary("Conditions") # Example
 
+for col in []
+	for i in eachrow(col)
+		ismissin(i) && continue
+		
