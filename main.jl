@@ -48,7 +48,23 @@ end
 
 data_dictionary("Conditions") # Example
 
-for col in []
-	for i in eachrow(col)
-		ismissin(i) && continue
+cdf=DataFrame
+for col in names(vdf)
+	values = vdf[!,col] |> skipmissing |> extrema
+	isempty(values) & 0
+end
+
+# Summaries
+show(describe(vdf), allrows=true, allcols=true)
+
+# Columns where all values are the same
+bad_columns = names(vdf)[ vdf |> eachcol .|> allequal |> findall ]
+		
+# Columns where all values are missing
+names(vdf)[ vdf |> eachcol .|> skipmissing .|> isempty |> findall ]
+
+# Delete these columns
+select!(ddf, Not( bad_columns ))
+
+#TODO: Some Int64 columns should be Bool
 		
