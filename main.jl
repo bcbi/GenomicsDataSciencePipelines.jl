@@ -6,13 +6,18 @@ using UnicodePlots
 data_dir =
 prior_file = 
 variant_file =
-
 work_dir =
-
 dict_file =
+accession_file = 
+
 
 function sorted_counts(df, col)
 	sort(combine(groupby(df, col), nrow), :nrow, rev=true)
+end
+
+# Find data dictionary entry for a column
+function data_dictionary(x)
+	ddf[ddf[!,"Variable Name"] .== uppercase(x),:]
 end
 
 vdf = CSV.File(joinpath(data_dir, variant_file), dateformat="mm/dd/yyyy") |> DataFrame
@@ -41,11 +46,6 @@ y[y.∉Ref(x)] # Dictionary entries not found in the variants columns
 rename!(vdf, names(vdf) .=> uppercase.(names(vdf)))
 ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
 
-# Find data dictionary entry for a column
-function data_dictionary(x)
-	ddf[ddf[!,"Variable Name"] .== uppercase(x),:]
-end
-
 data_dictionary("Conditions") # Example
 
 cdf=DataFrame
@@ -67,4 +67,8 @@ names(vdf)[ vdf |> eachcol .|> skipmissing .|> isempty |> findall ]
 select!(ddf, Not( bad_columns ))
 
 #TODO: Some Int64 columns should be Bool
+
+# Connect accession numbers with data set
+gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
+
 		
