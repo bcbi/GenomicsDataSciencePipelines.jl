@@ -1,15 +1,18 @@
+using ConfParser
 using CSV
 using DataFrames
 using Dates
 using UnicodePlots
 
-data_dir =
-prior_file = 
-variant_file =
-work_dir =
-dict_file =
-accession_file = 
-
+# Read in options
+conf = ConfParse("./config.ini")
+parse_conf!(conf)
+data_dir = retrieve(conf, "local", "data_dir")
+prior_file = retrieve(conf, "local", "prior_file")
+variant_file = retrieve(conf, "local", "variant_file")
+work_dir = retrieve(conf, "local", "work_dir")
+dict_file = retrieve(conf, "local", "dict_file")
+accession_file = retrieve(conf, "local", "accession_file")
 
 function sorted_counts(df, col)
 	sort(combine(groupby(df, col), nrow), :nrow, rev=true)
@@ -21,9 +24,9 @@ function data_dictionary(x)
 end
 
 vdf = CSV.File(joinpath(data_dir, variant_file), dateformat="mm/dd/yyyy") |> DataFrame
-CSV.write(joinpath(work_dir, "accessions.csv"), accessions)
-accessions = sorted_counts
-filter(x->x.nrow > 1, accessions)
+#accessions = sorted_counts(
+#CSV.write(joinpath(work_dir, "accessions.csv"), accessions)
+#filter(x->x.nrow > 1, accessions)
 vdf.IDL_City |> unique |> sort .|> println;
 vdf.IDL_age |> histogram
 vdf.IDL_age |> boxplot
