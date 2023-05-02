@@ -45,10 +45,12 @@ for col in names(vdf)
 	if all_values == [0,1]
 		vdf[!,col] = Bool.(vdf[!,col])
 	elseif all_values == ["No", "Yes"]
-		d = Dict(["No", "Yes"] .=> [0,1])
+		d = Dict(["No", "Yes"] .=> [false,true])
 		vdf[!,col] = vdf[!,col] .|> x->d[x]
 	end
 end
+
+%TODO: 76 & 78 are zip codes - read as String?
 
 # Fix names
 rename!(vdf, names(vdf) .=> uppercase.(names(vdf)))
@@ -76,5 +78,3 @@ ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
 m = match.(r"^hCoV-19/USA/(.*)-(.*)-(.*)/([0-9]{4})$", gdf.strain)
 n = unique(filter(x->!isnothing(x),m) .|> x->x.captures[3])
 n ∩ vdf.ACCESSION_NUMBER
-
-		
