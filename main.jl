@@ -73,5 +73,8 @@ select!(vdf, Not( bad_columns ))
 
 # Connect accession numbers with data set
 gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
+m = match.(r"^hCoV-19/USA/(.*)-(.*)-(.*)/([0-9]{4})$", gdf.strain)
+n = unique(filter(x->!isnothing(x),m) .|> x->x.captures[3])
+n ∩ vdf.ACCESSION_NUMBER
 
 		
