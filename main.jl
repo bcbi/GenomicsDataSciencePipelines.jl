@@ -33,7 +33,7 @@ vdf.IDL_age |> boxplot
 
 filter(x->occursin("0",x), vdf.Accession_Number |> skipmissing) |> unique |> length
 
-Dates.DateTime.(skipmissing(vdf.IDL_specimen_collection_date), dateformat"mm/dd/yyyy") |> extrema
+vdf.IDL_specimen_collection_date |> skipmissing |> extrema
 
 ddf = CSV.read(joinpath(work_dir, dict_file), DataFrame)
 select!(ddf, Not(:Column7)) # or just read in the first 6 columns only
@@ -51,11 +51,11 @@ ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
 
 data_dictionary("Conditions") # Example
 
-cdf=DataFrame
-for col in names(vdf)
-	values = vdf[!,col] |> skipmissing |> extrema
-	isempty(values) & 0
-end
+#cdf=DataFrame
+#for col in names(vdf)
+#	values = vdf[!,col] |> skipmissing |> extrema
+#	isempty(values) & 0
+#end
 
 # Summaries
 show(describe(vdf), allrows=true, allcols=true)
@@ -67,7 +67,7 @@ bad_columns = names(vdf)[ vdf |> eachcol .|> allequal |> findall ]
 names(vdf)[ vdf |> eachcol .|> skipmissing .|> isempty |> findall ]
 
 # Delete these columns
-select!(ddf, Not( bad_columns ))
+select!(vdf, Not( bad_columns ))
 
 #TODO: Some Int64 columns should be Bool
 
