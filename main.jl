@@ -39,11 +39,20 @@ bad_columns = names(vdf)[ vdf |> eachcol .|> allequal |> findall ]
 # Delete these columns
 select!(vdf, Not( bad_columns ))
 
+# Set proper datatype for true/false survey data
+for col in names(vdf)
+	all_values = unique(vdf[!,col])
+	if all_values == [0,1]
+		vdf[!,col] = Bool.(vdf[!,col])
+	elseif all_values == ["No", "Yes"]
+		d = Dict(["No", "Yes"] .=> [0,1])
+		vdf[!,col] = vdf[!,col] .|> x->d[x]
+	end
+end
+
 # Fix names
 rename!(vdf, names(vdf) .=> uppercase.(names(vdf)))
 ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
-
-#TODO: Some Int64 columns should be Bool
 
 # Summaries
 #show(describe(vdf), allrows=true, allcols=true)
