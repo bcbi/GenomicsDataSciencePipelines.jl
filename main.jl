@@ -26,7 +26,9 @@ for var in user_vars
 end
 
 # Read in data
-vdf = CSV.File(joinpath(data_dir, variant_file), dateformat="mm/dd/yyyy") |> DataFrame
+vdf = CSV.File(joinpath(data_dir, variant_file),
+               dateformat="mm/dd/yyyy",
+               types=Dict(:idl_zipcode=>String, test_site_zip=>String) ) |> DataFrame
 ddf = CSV.read(joinpath(work_dir, dict_file), DataFrame, select=1:6)
 gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
 
@@ -49,8 +51,6 @@ for col in names(vdf)
 		vdf[!,col] = vdf[!,col] .|> x->d[x]
 	end
 end
-
-%TODO: 76 & 78 are zip codes - read as String?
 
 # Fix names
 rename!(vdf, names(vdf) .=> uppercase.(names(vdf)))
