@@ -28,7 +28,7 @@ end
 # Read in data
 vdf = CSV.File(joinpath(data_dir, variant_file),
                dateformat="mm/dd/yyyy",
-               types=Dict(:idl_zipcode=>String, test_site_zip=>String) ) |> DataFrame
+               types=Dict(:idl_zipcode=>String, :test_site_zip=>String) ) |> DataFrame
 ddf = CSV.read(joinpath(work_dir, dict_file), DataFrame, select=1:6)
 gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
 
