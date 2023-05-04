@@ -77,4 +77,7 @@ ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
 # Connect accession numbers with data set
 m = match.(r"^hCoV-19/USA/(.*)-(.*)-(.*)/([0-9]{4})$", gdf.strain)
 n = unique(filter(x->!isnothing(x),m) .|> x->x.captures[3])
-n ∩ vdf.ACCESSION_NUMBER
+q = n ∩ vdf.ACCESSION_NUMBER
+
+# Verify that matches are unique
+unique(1:length(q) .|> y->filter(:ACCESSION_NUMBER => x-> !ismissing(x) && x==q[y], vdf) |> nrow)
