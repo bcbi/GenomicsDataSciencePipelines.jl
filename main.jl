@@ -75,9 +75,23 @@ ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
 #y[y.∉Ref(x)] # Dictionary entries not found in the variants columns
 
 # Connect accession numbers with data set
-m = match.(r"^hCoV-19/USA/(.*)-(.*)-(.*)/([0-9]{4})$", gdf.strain)
-n = unique(filter(x->!isnothing(x),m) .|> x->x.captures[3])
-q = n ∩ vdf.ACCESSION_NUMBER
+vdf.strain_state =
+	vdf.strain_site =
+	vdf.strain_id =
+	vdf.strain_year =
+	convert(Vector{Union{Nothing,String}}, fill(nothing,nrow(vdf)))
+for row in 1:nrow(vdf)
+	m = match(r"^hCoV-19/USA/(.*)-(.*)-(.*)/([0-9]{4})$", gdf[row,:strain])
+	isnothing(m) && continue
+	vdf[row,:strain_state] = m[1]
+	vdf[row,:strain_site] = m[2]
+	vdf[row,:strain_id] = m[3]
+	vdf[row,:strain_year] = m[4]
+end
 
+# Older connection method
+#m = match.(r"^hCoV-19/USA/(.*)-(.*)-(.*)/([0-9]{4})$", gdf.strain)
+#n = unique(filter(x->!isnothing(x),m) .|> x->x.captures[3])
+#q = n ∩ vdf.ACCESSION_NUMBER
 # Verify that matches are unique
-unique(1:length(q) .|> y->filter(:ACCESSION_NUMBER => x-> !ismissing(x) && x==q[y], vdf) |> nrow)
+#unique(1:length(q) .|> y->filter(:ACCESSION_NUMBER => x-> !ismissing(x) && x==q[y], vdf) |> nrow)
