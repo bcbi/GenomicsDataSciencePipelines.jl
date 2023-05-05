@@ -2,6 +2,7 @@ using ConfParser
 using CSV
 using DataFrames
 using Dates
+using StatsBase
 using UnicodePlots
 
 # Unique values in df.col, sorted by number of occurrences
@@ -55,6 +56,16 @@ end
 # Fix names
 rename!(vdf, names(vdf) .=> uppercase.(names(vdf)))
 ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
+
+# Add ID to GISAID data matching the COVID-19 accession IDs
+m = match.(r"^hCoV-19/USA/RI-RISHL-(.*)/20([0-9]{2})$",gdf.strain)
+x = convert(Vector{Union{Nothing,String}}, fill(nothing,nrow(gdf)))
+for i in 1:nrow(gdf)
+	a=m[i]
+	isnothing(a) && continue
+	x[i] = "RI-" * a[2] * "-" * a[1]
+end
+gdf.id=x
 
 # Summaries
 #show(describe(vdf), allrows=true, allcols=true)
