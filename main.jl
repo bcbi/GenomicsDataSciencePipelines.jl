@@ -23,10 +23,9 @@ function main()
 	conf = ConfParse("./config.ini")
 	parse_conf!(conf)
 	data_dir = retrieve(conf, "local", "data_dir")
-	dict_file =
 	prior_file = retrieve(conf, "local", "prior_file")
-	accession_file = 
 	variant_file = retrieve(conf, "local", "variant_file")
+
 	work_dir = retrieve(conf, "local", "work_dir")
 	dict_file = retrieve(conf, "local", "dict_file")
 	accession_file = retrieve(conf, "local", "accession_file")
@@ -39,11 +38,8 @@ function main()
 	gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
 
 	# Remove unneeded columns
-	#select!(ddf, Not(:Column7)) # or just read in the first 6 columns only
 	# Columns where all values are the same
 	bad_columns = names(vdf)[ vdf |> eachcol .|> allequal |> findall ]
-	# Columns where all values are missing
-	#names(vdf)[ vdf |> eachcol .|> skipmissing .|> isempty |> findall ]
 	# Delete these columns
 	select!(vdf, Not( bad_columns ))
 
@@ -71,44 +67,4 @@ function main()
 		x[i] = "RI-" * a[2] * "-" * a[1]
 	end
 	gdf.id=x
-
-	# Summaries
-	#show(describe(vdf), allrows=true, allcols=true)
-
-	# Ad-hoc checks
-	#accessions = sorted_counts(
-	#CSV.write(joinpath(work_dir, "accessions.csv"), accessions)
-	#filter(x->x.nrow > 1, accessions)
-	#vdf.IDL_City |> unique |> sort .|> println;
-	#vdf.IDL_age |> histogram
-	#vdf.IDL_age |> boxplot
-	#filter(x->occursin("0",x), vdf.Accession_Number |> skipmissing) |> unique |> length
-	#vdf.IDL_specimen_collection_date |> skipmissing |> extrema
-	#x = names(vdf);
-	#y = ddf[!, "Variable Name"];
-	#x ∩ y # Columns found in the data dictionary
-	#x[x.∉Ref(y)] # Columns not found in the data dictionary
-	#y[y.∉Ref(x)] # Dictionary entries not found in the variants columns
-
-	# Connect accession numbers with data set
-	vdf.strain_state =
-		vdf.strain_site =
-		vdf.strain_id =
-		vdf.strain_year =
-		convert(Vector{Union{Nothing,String}}, fill(nothing,nrow(vdf)))
-	for row in 1:nrow(vdf)
-		m = match(r"^hCoV-19/USA/(.*)-(.*)-(.*)/([0-9]{4})$", gdf[row,:strain])
-		isnothing(m) && continue
-		vdf[row,:strain_state] = m[1]
-		vdf[row,:strain_site] = m[2]
-		vdf[row,:strain_id] = m[3]
-		vdf[row,:strain_year] = m[4]
-	end
-
-	# Older connection method
-	#m = match.(r"^hCoV-19/USA/(.*)-(.*)-(.*)/([0-9]{4})$", gdf.strain)
-	#n = unique(filter(x->!isnothing(x),m) .|> x->x.captures[3])
-	#q = n ∩ vdf.ACCESSION_NUMBER
-	# Verify that matches are unique
-	#unique(1:length(q) .|> y->filter(:ACCESSION_NUMBER => x-> !ismissing(x) && x==q[y], vdf) |> nrow)
 end
