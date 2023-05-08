@@ -36,12 +36,6 @@ vdf = CSV.File(joinpath(data_dir, variant_file),
 ddf = CSV.read(joinpath(work_dir, dict_file), DataFrame, select=1:6)
 gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
 
-# Delete columns where all values are the same
-for df in [vdf, gdf]
-	bad_columns = names(df)[ df |> eachcol .|> allequal |> findall ]
-	select!(df, Not( bad_columns ))
-end
-
 # Set proper datatype for true/false survey data
 for col in names(vdf)
 	all_values = unique(vdf[!,col])
@@ -74,3 +68,23 @@ jdf = innerjoin(vdf, gdf, on=:ACCESSION_NUMBER, matchmissing=:notequal)
 
 # One row of gdf seems to have AGE and SEX interchanged.
 # However, it doesn't appear in the innerjoin, so it is ignored.
+
+# Delete columns where all values are the same
+#for df in [vdf, gdf]
+for df in [jdf]
+	bad_columns = names(df)[ df |> eachcol .|> allequal |> findall ]
+	for col in bad_columns
+		println("Deleting column $col; all values are: $(df[1,col])")
+	end
+	select!(df, Not( bad_columns ))
+end
+
+# All ages are a whole number of years (
+jdf.IDL_AGE = Int.(jdf.IDL_AGE)
+histogram(jdf.IDL_AGE)
+
+# Summary
+q = describe(jdf)
+q.num_unique = map(x->length(jdf[!,x] |> unique), names(jdf))
+show(q, allrows=true)
+
