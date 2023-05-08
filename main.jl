@@ -5,6 +5,10 @@ using Dates
 using StatsBase
 using UnicodePlots
 
+# Moving everything into a functino will improve performance
+# However, I'm leaving everything in gloabl scope so that I can
+# include() the file and work with everything directly.
+
 # Unique values in df.col, sorted by number of occurrences
 function sorted_counts(df, col)
 	sort(combine(groupby(df, col), nrow), :nrow, rev=true)
@@ -47,6 +51,18 @@ for col in names(vdf)
 	end
 end
 
+# Use Int for age (All values are a whole number of years)
+vdf.IDL_age = Int.(vdf.IDL_age)
+
+# Delete columns where all values are the same
+for df in [vdf, gdf]
+	bad_columns = names(df)[ df |> eachcol .|> allequal |> findall ]
+	for col in bad_columns
+		println("Deleting column $col; all values are: $(df[1,col])")
+	end
+	select!(df, Not( bad_columns ))
+end
+
 # For consistency between data sets, use all caps for column names
 rename!(vdf, names(vdf) .=> uppercase.(names(vdf)))
 rename!(gdf, names(gdf) .=> uppercase.(names(gdf)))
@@ -68,20 +84,6 @@ jdf = innerjoin(vdf, gdf, on=:ACCESSION_NUMBER, matchmissing=:notequal)
 
 # One row of gdf seems to have AGE and SEX interchanged.
 # However, it doesn't appear in the innerjoin, so it is ignored.
-
-# Delete columns where all values are the same
-#for df in [vdf, gdf]
-for df in [jdf]
-	bad_columns = names(df)[ df |> eachcol .|> allequal |> findall ]
-	for col in bad_columns
-		println("Deleting column $col; all values are: $(df[1,col])")
-	end
-	select!(df, Not( bad_columns ))
-end
-
-# All ages are a whole number of years (
-jdf.IDL_AGE = Int.(jdf.IDL_AGE)
-histogram(jdf.IDL_AGE)
 
 # Summary
 q = describe(jdf)
