@@ -36,11 +36,11 @@ vdf = CSV.File(joinpath(data_dir, variant_file),
 ddf = CSV.read(joinpath(work_dir, dict_file), DataFrame, select=1:6)
 gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
 
-# Remove unneeded columns
-# Columns where all values are the same
-bad_columns = names(vdf)[ vdf |> eachcol .|> allequal |> findall ]
-# Delete these columns
-select!(vdf, Not( bad_columns ))
+# Delete columns where all values are the same
+for df in [vdf, gdf]
+	bad_columns = names(df)[ df |> eachcol .|> allequal |> findall ]
+	select!(df, Not( bad_columns ))
+end
 
 # Set proper datatype for true/false survey data
 for col in names(vdf)
@@ -53,18 +53,24 @@ for col in names(vdf)
 	end
 end
 
-# Fix names
+# For consistency between data sets, use all caps for column names
 rename!(vdf, names(vdf) .=> uppercase.(names(vdf)))
-ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
+rename!(gdf, names(gdf) .=> uppercase.(names(gdf)))
 
-# Add ID to GISAID data matching the COVID-19 accession IDs
-gdf.id = let
-	m = match.(r"^hCoV-19/USA/RI-RISHL-(.*)/20([0-9]{2})$",gdf.strain)
+# Add ACCESSION_NUMBER to GISAID data matching the COVID-19 accession IDs
+gdf.ACCESSION_NUMBER = let
+	m = match.(r"^hCoV-19/USA/RI-RISHL-(.*)/20([0-9]{2})$",gdf.STRAIN)
 	x = convert(Vector{Union{Nothing,String}}, fill(nothing,nrow(gdf)))
 	for i in 1:nrow(gdf)
 		a=m[i]
 		isnothing(a) && continue
 		x[i] = "RI-" * a[2] * "-" * a[1]
 	end
-	x
+	x;
 end
+
+# Join datasets on matching ACCESSION_NUMBER
+jdf = innerjoin(vdf, gdf, on=:ACCESSION_NUMBER, matchmissing=:notequal)
+
+# One row of gdf seems to have AGE and SEX interchanged.
+# However, it doesn't appear in the innerjoin, so it is ignored.
