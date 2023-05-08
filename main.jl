@@ -22,6 +22,10 @@ function data_dictionary(x)
 	ddf[ddf[!,"Variable Name"] .== uppercase(x),:]
 end
 
+#===========================================================
+	Read in data from files
+===========================================================#
+
 # Read in options
 conf = ConfParse("./config.ini")
 parse_conf!(conf)
@@ -40,6 +44,21 @@ vdf = CSV.File(joinpath(data_dir, variant_file),
 ddf = CSV.read(joinpath(work_dir, dict_file), DataFrame, select=1:6)
 gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
 
+#===========================================================
+	Fix data in variant file
+===========================================================#
+
+# Fix ZIP Codes
+# This column is a write-in field.
+# Most have 4 digits, but one has 3. None begin wtith a zero.
+# I am padding all of them with zeros.
+# The other ZIP Code field is fine. All present values have 5 digits
+for i in 1:nrow(vdf)
+	if !ismissing(vdf[i,:idl_zipcode])
+		vdf[i,:idl_zipcode] = lpad(vdf[i,:idl_zipcode], 5, '0')
+	end
+end
+
 # Set proper datatype for true/false survey data
 for col in names(vdf)
 	all_values = unique(vdf[!,col])
@@ -54,6 +73,10 @@ end
 # Use Int for age (All values are a whole number of years)
 vdf.IDL_age = Int.(vdf.IDL_age)
 
+#===========================================================
+	General improvements to both datasets
+===========================================================#
+
 # Delete columns where all values are the same
 for df in [vdf, gdf]
 	bad_columns = names(df)[ df |> eachcol .|> allequal |> findall ]
@@ -66,6 +89,10 @@ end
 # For consistency between data sets, use all caps for column names
 rename!(vdf, names(vdf) .=> uppercase.(names(vdf)))
 rename!(gdf, names(gdf) .=> uppercase.(names(gdf)))
+
+#===========================================================
+	Connect both datasets
+===========================================================#
 
 # Add ACCESSION_NUMBER to GISAID data matching the COVID-19 accession IDs
 gdf.ACCESSION_NUMBER = let
@@ -84,6 +111,10 @@ jdf = innerjoin(vdf, gdf, on=:ACCESSION_NUMBER, matchmissing=:notequal)
 
 # One row of gdf seems to have AGE and SEX interchanged.
 # However, it doesn't appear in the innerjoin, so it is ignored.
+
+#===========================================================
+	Summaries and visualizations
+===========================================================#
 
 # Summary
 q = describe(jdf)
