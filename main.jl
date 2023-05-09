@@ -5,26 +5,22 @@ using Dates
 using StatsBase
 using UnicodePlots
 
-# Moving everything into a functino will improve performance
-# However, I'm leaving everything in gloabl scope so that I can
-# include() the file and work with everything directly.
-
-# Unique values in df.col, sorted by number of occurrences
-function sorted_counts(df, col)
-	sort(combine(groupby(df, col), nrow), :nrow, rev=true)
-end
-
-"""
-# Find data dictionary entry for a column
-# data_dictionary("Conditions") # Example
-"""
-function data_dictionary(x)
-	ddf[ddf[!,"Variable Name"] .== uppercase(x),:]
-end
-
 #===========================================================
-	Read in data from files
+
+The easiest way to push changes to the secure enclave:
+pbcopy < ./main.jl # On Mac, copy the file to the clipboard
+# On the server, delete the old file contents and paste in the new
+
+USAGE: julia> include("./main.jl")
+
+Everything is in global scope, so you can
+work directly with all the data afterwards.
+
 ===========================================================#
+
+#-----------------------------------------------------------
+# Read in data from files
+#-----------------------------------------------------------
 
 # Read in options
 conf = ConfParse("./config.ini")
@@ -44,9 +40,9 @@ vdf = CSV.File(joinpath(data_dir, variant_file),
 ddf = CSV.read(joinpath(work_dir, dict_file), DataFrame, select=1:6)
 gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
 
-#===========================================================
-	Fix data in variant file
-===========================================================#
+#-----------------------------------------------------------
+# Fix data in variant file
+#-----------------------------------------------------------
 
 # Fix ZIP Codes
 # This column is a write-in field.
@@ -73,9 +69,9 @@ end
 # Use Int for age (All values are a whole number of years)
 vdf.IDL_age = Int.(vdf.IDL_age)
 
-#===========================================================
-	General improvements to both datasets
-===========================================================#
+#-----------------------------------------------------------
+# General improvements to both datasets
+#-----------------------------------------------------------
 
 # Delete columns where all values are the same
 for df in [vdf, gdf]
@@ -89,10 +85,11 @@ end
 # For consistency between data sets, use all caps for column names
 rename!(vdf, names(vdf) .=> uppercase.(names(vdf)))
 rename!(gdf, names(gdf) .=> uppercase.(names(gdf)))
+ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
 
-#===========================================================
-	Connect both datasets
-===========================================================#
+#-----------------------------------------------------------
+# Connect both datasets
+#-----------------------------------------------------------
 
 # Add ACCESSION_NUMBER to GISAID data matching the COVID-19 accession IDs
 gdf.ACCESSION_NUMBER = let
@@ -112,12 +109,60 @@ jdf = innerjoin(vdf, gdf, on=:ACCESSION_NUMBER, matchmissing=:notequal)
 # One row of gdf seems to have AGE and SEX interchanged.
 # However, it doesn't appear in the innerjoin, so it is ignored.
 
-#===========================================================
-	Summaries and visualizations
-===========================================================#
+#-----------------------------------------------------------
+# Summaries and visualizations
+#-----------------------------------------------------------
 
 # Summary
 q = describe(jdf)
 q.num_unique = map(x->length(jdf[!,x] |> unique), names(jdf))
-show(q, allrows=true)
+show(q, allrows=true, allcols=true) 
+
+#-----------------------------------------------------------
+# Useful commands
+#-----------------------------------------------------------
+
+RUN_THESE_EXAMPLES = false
+if(RUN_THESE_EXAMPLES)
+	# What are the column names in this DataFrame?
+	names(vdf)
+
+	# What are ALL the column names in this DataFrame?
+	names(vdf) |> show
+
+	# What are the possible values in this column?
+	vdf.IDL_RACE |> unique
+	ddf[!,"Collection Method"] |> unique # Useful if column name is not a valid symbol (e.g., contains a space)
+
+	# What is the data dictionary information for the field :IDL_AGE?
+		ddf[ddf[!,"Variable Name"] .== "IDL_AGE",:]
+
+	# See most frequent values in jdf.IDL_ZIPCODE, sorted by number of occurrences
+	first(sort(combine(groupby(jdf, :IDL_ZIPCODE), nrow), :nrow, rev=true), 15)
+
+	# Select only females
+	#filter(:IDL_SEX => ==("Female"), jdf) # This is standard, but it fails with missing values
+	filter(:IDL_SEX => x -> !ismissing(x) && x == "Female", jdf)
+
+	# Select by age
+	filter(:IDL_AGE => x -> !ismissing(x) && 20 ≤ x < 30, jdf)
+
+	# Simple plots
+	vdf.IDL_AGE |> histogram
+	jdf.IDL_AGE |> boxplot
+
+	# Look at 10 random accession numbers
+	sample(vdf.ACCESSION_NUMBER, 10)
+
+	# Compare sets of column names
+	x = names(vdf);
+	y = ddf[!, "Variable Name"];
+	x ∩ y # Columns found in the data dictionary
+	x[x.∉Ref(y)] # Columns not found in the data dictionary
+	y[y.∉Ref(x)] # Dictionary entries not found in the variants columns
+
+	# Verify that accession numbers map to a single unique row in the variant data
+	unique(1:length(jdf.ACCESSION_NUMBER) .|> y->filter(:ACCESSION_NUMBER => x-> !ismissing(x) && x==jdf.ACCESSION_NUMBER[y], vdf) |> nrow) == [1]
+
+end
 
