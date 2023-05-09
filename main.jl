@@ -1,9 +1,3 @@
-using ConfParser
-using CSV
-using DataFrames
-using Dates
-using StatsBase
-using UnicodePlots
 
 #===========================================================
 
@@ -19,7 +13,18 @@ work directly with all the data afterwards.
 ===========================================================#
 
 #-----------------------------------------------------------
-# Read in data from files
+@info "Loading packages"
+#-----------------------------------------------------------
+
+using ConfParser
+using CSV
+using DataFrames
+using Dates
+using StatsBase
+using UnicodePlots
+
+#-----------------------------------------------------------
+@info "Reading in data from files"
 #-----------------------------------------------------------
 
 # Read in options
@@ -41,7 +46,7 @@ ddf = CSV.read(joinpath(work_dir, dict_file), DataFrame, select=1:6)
 gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
 
 #-----------------------------------------------------------
-# Fix data in variant file
+@info "Fixing data in variant file"
 #-----------------------------------------------------------
 
 # Fix ZIP Codes
@@ -53,6 +58,12 @@ for i in 1:nrow(vdf)
 	if !ismissing(vdf[i,:idl_zipcode])
 		vdf[i,:idl_zipcode] = lpad(vdf[i,:idl_zipcode], 5, '0')
 	end
+
+	# I'm also using this loop to fix a typo in one accession number (an extra dash)
+	# UPDATE: Nevermind, this doesn't end up in the joined dataset anyway
+	#if !ismissing(vdf[i,:Accession_Number])
+	#	vdf[i,:Accession_Number] = replace(vdf[i,:Accession_Number], "--" => "-")
+	#end
 end
 
 # Set proper datatype for true/false survey data
@@ -70,7 +81,7 @@ end
 vdf.IDL_age = Int.(vdf.IDL_age)
 
 #-----------------------------------------------------------
-# General improvements to both datasets
+@info "Making improvements to datasets"
 #-----------------------------------------------------------
 
 # Delete columns where all values are the same
@@ -88,7 +99,7 @@ rename!(gdf, names(gdf) .=> uppercase.(names(gdf)))
 ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
 
 #-----------------------------------------------------------
-# Connect both datasets
+@info "Connecting both datasets"
 #-----------------------------------------------------------
 
 # Add ACCESSION_NUMBER to GISAID data matching the COVID-19 accession IDs
@@ -110,7 +121,7 @@ jdf = innerjoin(vdf, gdf, on=:ACCESSION_NUMBER, matchmissing=:notequal)
 # However, it doesn't appear in the innerjoin, so it is ignored.
 
 #-----------------------------------------------------------
-# Summaries and visualizations
+@info "Preparing data summary"
 #-----------------------------------------------------------
 
 # Summary
@@ -118,12 +129,12 @@ q = describe(jdf)
 q.num_unique = map(x->length(jdf[!,x] |> unique), names(jdf))
 show(q, allrows=true, allcols=true) 
 
-#-----------------------------------------------------------
-# Useful commands
-#-----------------------------------------------------------
+#===========================================================
+# Example commands
+===========================================================#
 
-RUN_THESE_EXAMPLES = false
-if(RUN_THESE_EXAMPLES)
+RUN_EXAMPLES = false
+if(RUN_EXAMPLES)
 	# What are the column names in this DataFrame?
 	names(vdf)
 
@@ -153,6 +164,11 @@ if(RUN_THESE_EXAMPLES)
 
 	# Look at 10 random accession numbers
 	sample(vdf.ACCESSION_NUMBER, 10)
+
+	# See accession number with typo (extra dash) ...
+	temp = filter(x -> !ismissing(x) && first(x,4) == "RI--", vdf.ACCESSION_NUMBER)
+	# ... And see that it doesn't appear in the gisaid data
+	filter(:ACCESSION_NUMBER => x -> !ismissing(x) && x == temp, gdf)
 
 	# Compare sets of column names
 	x = names(vdf);
