@@ -127,7 +127,7 @@ jdf = innerjoin(vdf, gdf, on=:ACCESSION_NUMBER, matchmissing=:notequal)
 
 # Summary
 q = describe(jdf)
-q.num_unique = map(x->length(jdf[!,x] |> unique), names(jdf))
+q.nunique = map(x->length(jdf[!,x] |> unique), names(jdf))
 show(q, allrows=true, allcols=true)
 println()
 
@@ -187,6 +187,9 @@ if(RUN_EXAMPLES)
 
 	# Verify that accession numbers map to a single unique row in the variant data
 	unique(1:length(jdf.ACCESSION_NUMBER) .|> y->filter(:ACCESSION_NUMBER => x-> !ismissing(x) && x==jdf.ACCESSION_NUMBER[y], vdf) |> nrow) == [1]
+
+	# Find any person IDs that occur more than once
+	filter(x->last(x)>1, countmap(jdf.IDL_PERSON_ID))
 
 end
 
