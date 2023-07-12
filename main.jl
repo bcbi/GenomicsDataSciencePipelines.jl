@@ -22,6 +22,7 @@ using DataFrames
 using Dates
 using StatsBase
 using UnicodePlots
+using Plots
 
 #-----------------------------------------------------------
 @info "Reading in data from files"
@@ -127,7 +128,14 @@ jdf = innerjoin(vdf, gdf, on=:ACCESSION_NUMBER, matchmissing=:notequal)
 # Summary
 q = describe(jdf)
 q.num_unique = map(x->length(jdf[!,x] |> unique), names(jdf))
-show(q, allrows=true, allcols=true) 
+show(q, allrows=true, allcols=true)
+println()
+
+#-----------------------------------------------------------
+@info "Drawing Figures"
+#-----------------------------------------------------------
+
+Plots.savefig(Plots.histogram(jdf.IDL_SPECIMEN_COLLECTION_DATE, bins=80), "collection_dates.png")
 
 #===========================================================
 # Example commands
