@@ -137,6 +137,12 @@ println()
 
 Plots.savefig(Plots.histogram(jdf.IDL_SPECIMEN_COLLECTION_DATE, bins=80), "collection_dates.png")
 
+#-----------------------------------------------------------
+@info "Writing output file"
+#-----------------------------------------------------------
+
+CSV.write("out.csv", jdf, quotestrings=true)
+
 #===========================================================
 # Example commands
 ===========================================================#
