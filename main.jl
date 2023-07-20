@@ -19,7 +19,9 @@ work directly with all the data afterwards.
 using ConfParser
 using CSV
 using DataFrames
+using DataFramesMeta
 using Dates
+using GMT
 using StatsBase
 using UnicodePlots
 using Plots
@@ -136,6 +138,25 @@ println()
 #-----------------------------------------------------------
 
 Plots.savefig(Plots.histogram(jdf.IDL_SPECIMEN_COLLECTION_DATE, bins=80), "collection_dates.png")
+
+# Geographical plot
+cpop = CSV.File("/data/ursa_research/ris3/Ashlin/zips.csv", types=Dict(:ZIP=>String)) |> DataFrame
+cpop.PLOT_VALUE = cpop.ZIP .|> x -> get(jdf.IDL_ZIPCODE |> countmap, x, 0)
+# Downloaded from https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
+counties = gmtread("/data/ursa_research/ris3/Ashlin/cb_2018_us_zcta510_500k/cb_2018_us_zcta510_500k.shp")
+dfc = DataFrame(ZIP = map(x->x.attrib["ZCTA5CE10"],counties),ORDER=1:length(counties))
+joineddata = @chain leftjoin(dfc,cpop,on= [:ZIP],makeunique=true) begin
+	@orderby(:ORDER)
+end
+cptvallog = makecpt(range=(0,130),C=:matter)
+# I think these are the options: 
+# https://docs.juliaplots.org/latest/generated/colorschemes/#cmocean
+# algae looks nice, but it doesn't show contrast well
+# speed is okay
+# I like deep
+joineddata.PLOT_VALUE = replace(joineddata.PLOT_VALUE,missing => 0)
+GMT.plot(counties,level=joineddata.PLOT_VALUE,cmap=cptvallog,close=true,fill="+z",pen=0.25,region=(-71.9,-71.1,41.1,42.05),
+           proj=:guess,colorbar=true,figname="choroplethlog.png",title="Number of sequences by ZIP code")
 
 #-----------------------------------------------------------
 @info "Writing output file"
