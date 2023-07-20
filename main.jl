@@ -139,6 +139,7 @@ println()
 
 Plots.savefig(Plots.histogram(jdf.IDL_SPECIMEN_COLLECTION_DATE, bins=80), "collection_dates.png")
 
+# Based on https://www.generic-mapping-tools.org/GMTjl_doc/tutorials/dlakelan/GMTMaps/
 # Geographical plot
 cpop = CSV.File("/data/ursa_research/ris3/Ashlin/zips.csv", types=Dict(:ZIP=>String)) |> DataFrame
 cpop.PLOT_VALUE = cpop.ZIP .|> x -> get(jdf.IDL_ZIPCODE |> countmap, x, 0)
