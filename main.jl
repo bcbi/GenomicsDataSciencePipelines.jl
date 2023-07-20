@@ -156,7 +156,27 @@ cptvallog = makecpt(range=(0,130),C=:matter)
 # I like deep
 joineddata.PLOT_VALUE = replace(joineddata.PLOT_VALUE,missing => 0)
 GMT.plot(counties,level=joineddata.PLOT_VALUE,cmap=cptvallog,close=true,fill="+z",pen=0.25,region=(-71.9,-71.1,41.1,42.05),
-           proj=:guess,colorbar=true,figname="choroplethlog.png",title="Number of sequences by ZIP code")
+           proj=:guess,colorbar=true,figname="geo_sequences.png",title="Number of sequences by ZIP code")
+
+# Geographical plot
+cpop = CSV.File("/data/ursa_research/ris3/Ashlin/zips.csv", types=Dict(:ZIP=>String)) |> DataFrame
+mean_age = combine(groupby(jdf, :IDL_ZIPCODE), :IDL_AGE => mean)
+cpop.PLOT_VALUE = cpop.ZIP .|> x -> get(mean_age |> eachrow |> Dict, x, 0) |> Float64
+# Downloaded from https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
+counties = gmtread("/data/ursa_research/ris3/Ashlin/cb_2018_us_zcta510_500k/cb_2018_us_zcta510_500k.shp")
+dfc = DataFrame(ZIP = map(x->x.attrib["ZCTA5CE10"],counties),ORDER=1:length(counties))
+joineddata = @chain leftjoin(dfc,cpop,on= [:ZIP],makeunique=true) begin
+	@orderby(:ORDER)
+end
+cptvallog = makecpt(range=(0,100),C=:deep)
+# I think these are the options: 
+# https://docs.juliaplots.org/latest/generated/colorschemes/#cmocean
+# algae looks nice, but it doesn't show contrast well
+# speed is okay
+# I like deep
+joineddata.PLOT_VALUE = replace(joineddata.PLOT_VALUE,missing => 0)
+GMT.plot(counties,level=joineddata.PLOT_VALUE,cmap=cptvallog,close=true,fill="+z",pen=0.25,region=(-71.9,-71.1,41.1,42.05),
+           proj=:guess,colorbar=true,figname="geo_mean_age.png",title="Mean age by ZIP code")
 
 #-----------------------------------------------------------
 @info "Writing output file"
