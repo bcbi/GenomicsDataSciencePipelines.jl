@@ -40,6 +40,7 @@ variant_file = retrieve(conf, "local", "variant_file")
 work_dir = retrieve(conf, "local", "work_dir")
 dict_file = retrieve(conf, "local", "dict_file")
 accession_file = retrieve(conf, "local", "accession_file")
+map_dir = retrieve(conf, "local", "map_dir")
 
 # Read in data
 vdf = CSV.File(joinpath(data_dir, variant_file),
@@ -141,10 +142,10 @@ Plots.savefig(Plots.histogram(jdf.IDL_SPECIMEN_COLLECTION_DATE, bins=80), "colle
 
 # Based on https://www.generic-mapping-tools.org/GMTjl_doc/tutorials/dlakelan/GMTMaps/
 # Geographical plot
-cpop = CSV.File("/data/ursa_research/ris3/Ashlin/zips.csv", types=Dict(:ZIP=>String)) |> DataFrame
+cpop = CSV.File(joinpath(map_dir, "zips.csv"), types=Dict(:ZIP=>String)) |> DataFrame
 cpop.PLOT_VALUE = cpop.ZIP .|> x -> get(jdf.IDL_ZIPCODE |> countmap, x, 0)
 # Downloaded from https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
-counties = gmtread("/data/ursa_research/ris3/Ashlin/cb_2018_us_zcta510_500k/cb_2018_us_zcta510_500k.shp")
+counties = gmtread(joinpath(map_dir,"cb_2018_us_zcta510_500k/cb_2018_us_zcta510_500k.shp"))
 dfc = DataFrame(ZIP = map(x->x.attrib["ZCTA5CE10"],counties),ORDER=1:length(counties))
 joineddata = @chain leftjoin(dfc,cpop,on= [:ZIP],makeunique=true) begin
 	@orderby(:ORDER)
@@ -160,11 +161,11 @@ GMT.plot(counties,level=joineddata.PLOT_VALUE,cmap=cptvallog,close=true,fill="+z
            proj=:guess,colorbar=true,figname="geo_sequences.png",title="Number of sequences by ZIP code")
 
 # Geographical plot
-cpop = CSV.File("/data/ursa_research/ris3/Ashlin/zips.csv", types=Dict(:ZIP=>String)) |> DataFrame
+cpop = CSV.File(joinpath(map_dir, "zips.csv"), types=Dict(:ZIP=>String)) |> DataFrame
 mean_age = combine(groupby(jdf, :IDL_ZIPCODE), :IDL_AGE => mean)
 cpop.PLOT_VALUE = cpop.ZIP .|> x -> get(mean_age |> eachrow |> Dict, x, 0) |> Float64
 # Downloaded from https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
-counties = gmtread("/data/ursa_research/ris3/Ashlin/cb_2018_us_zcta510_500k/cb_2018_us_zcta510_500k.shp")
+counties = gmtread(joinpath(map_dir,"cb_2018_us_zcta510_500k/cb_2018_us_zcta510_500k.shp"))
 dfc = DataFrame(ZIP = map(x->x.attrib["ZCTA5CE10"],counties),ORDER=1:length(counties))
 joineddata = @chain leftjoin(dfc,cpop,on= [:ZIP],makeunique=true) begin
 	@orderby(:ORDER)
