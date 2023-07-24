@@ -45,7 +45,7 @@ map_dir = retrieve(conf, "local", "map_dir")
 # Read in data
 vdf = CSV.File(joinpath(data_dir, variant_file),
 	       dateformat="mm/dd/yyyy",
-	       types=Dict(:idl_zipcode=>String, :test_site_zip=>String) ) |> DataFrame
+	       types=Dict(:IDL_Zipcode=>String, :test_site_zip=>String) ) |> DataFrame
 ddf = CSV.read(joinpath(work_dir, dict_file), DataFrame, select=1:6)
 gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
 
@@ -59,8 +59,8 @@ gdf = CSV.read(joinpath(work_dir, accession_file), DataFrame)
 # I am padding all of them with zeros.
 # The other ZIP Code field is fine. All present values have 5 digits
 for i in 1:nrow(vdf)
-	if !ismissing(vdf[i,:idl_zipcode])
-		vdf[i,:idl_zipcode] = lpad(vdf[i,:idl_zipcode], 5, '0')
+	if !ismissing(vdf[i,:IDL_Zipcode])
+		vdf[i,:IDL_Zipcode] = lpad(vdf[i,:IDL_Zipcode], 5, '0')
 	end
 
 	# I'm also using this loop to fix a typo in one accession number (an extra dash)
