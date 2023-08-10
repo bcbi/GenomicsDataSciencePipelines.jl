@@ -151,7 +151,7 @@ Plots.savefig(Plots.histogram(jdf.IDL_SPECIMEN_COLLECTION_DATE, bins=80), "colle
 function RI_plot(DATA, COLOR, FILENAME, TITLE)
 	# Geographical plot
 	cpop = CSV.File(joinpath(map_dir, "zips.csv"), types=Dict(:ZIP=>String)) |> DataFrame
-	cpop.PLOT_VALUE = cpop.ZIP .|> x -> get(mean_age |> eachrow |> Dict, x, 0) |> Float64
+	cpop.PLOT_VALUE = cpop.ZIP .|> x -> get(DATA |> eachrow |> Dict, x, 0) |> Float64
 	# Downloaded from https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
 	counties = gmtread(joinpath(map_dir,"cb_2018_us_zcta510_500k/cb_2018_us_zcta510_500k.shp"))
 	dfc = DataFrame(ZIP = map(x->x.attrib["ZCTA5CE10"],counties),ORDER=1:length(counties))
