@@ -243,8 +243,6 @@ PROVIDENCE_COUNTY = [
 ]
 	prov = filter(:IDL_ZIPCODE => x -> !ismissing(x) && x ∈ PROVIDENCE_COUNTY, jdf)
 
-
-
 #===========================================================
 # Example commands
 ===========================================================#
