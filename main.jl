@@ -157,7 +157,7 @@ dfc = DataFrame(ZIP = map(x->x.attrib["ZCTA5CE10"],counties),ORDER=1:length(coun
 joineddata = @chain leftjoin(dfc,cpop,on= [:ZIP],makeunique=true) begin
 	@orderby(:ORDER)
 end
-cptvallog = makecpt(range=(0,130),C=:matter)
+cptvallog = makecpt(range=(0,300),C=:matter)
 # I think these are the options: 
 # https://docs.juliaplots.org/latest/generated/colorschemes/#cmocean
 # algae looks nice, but it doesn't show contrast well
