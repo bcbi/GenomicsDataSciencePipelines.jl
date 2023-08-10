@@ -106,27 +106,8 @@ ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
 @info "Connecting both datasets"
 #-----------------------------------------------------------
 
-#= DEPRECATED
-
-# Add ACCESSION_NUMBER to GISAID data matching the COVID-19 accession IDs
-gdf.ACCESSION_NUMBER = let
-	m = match.(r"^hCoV-19/USA/RI-RISHL-(.*)/20([0-9]{2})$",gdf.STRAIN)
-	x = convert(Vector{Union{Nothing,String}}, fill(nothing,nrow(gdf)))
-	for i in 1:nrow(gdf)
-		a=m[i]
-		isnothing(a) && continue
-		x[i] = "RI-" * a[2] * "-" * a[1]
-	end
-	x;
-end
-
-# Join datasets on matching ACCESSION_NUMBER
-jdf = innerjoin(vdf, gdf, on=:ACCESSION_NUMBER, matchmissing=:notequal)
-
 # One row of gdf seems to have AGE and SEX interchanged.
-# However, it doesn't appear in the innerjoin, so it is ignored.
-
-=#
+#TODO: Is it present in the final join?
 
 rename!(vdf, :GISAID_ACCESSION_ID => :ACCESSION_ID)
 jdf = innerjoin(vdf, gdf, on=:ACCESSION_ID, matchmissing=:notequal)
