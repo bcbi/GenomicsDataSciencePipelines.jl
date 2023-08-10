@@ -106,6 +106,8 @@ ddf[!,"Variable Name"] = uppercase.(ddf[!,"Variable Name"])
 @info "Connecting both datasets"
 #-----------------------------------------------------------
 
+#= DEPRECATED
+
 # Add ACCESSION_NUMBER to GISAID data matching the COVID-19 accession IDs
 gdf.ACCESSION_NUMBER = let
 	m = match.(r"^hCoV-19/USA/RI-RISHL-(.*)/20([0-9]{2})$",gdf.STRAIN)
@@ -123,6 +125,11 @@ jdf = innerjoin(vdf, gdf, on=:ACCESSION_NUMBER, matchmissing=:notequal)
 
 # One row of gdf seems to have AGE and SEX interchanged.
 # However, it doesn't appear in the innerjoin, so it is ignored.
+
+=#
+
+rename!(vdf, :GISAID_ACCESSION_ID => :ACCESSION_ID)
+jdf = innerjoin(vdf, gdf, on=:ACCESSION_ID, matchmissing=:notequal)
 
 #-----------------------------------------------------------
 @info "Preparing data summary"
@@ -219,13 +226,13 @@ if(RUN_EXAMPLES)
 	vdf.IDL_AGE |> histogram
 	jdf.IDL_AGE |> boxplot
 
-	# Look at 10 random accession numbers
-	sample(vdf.ACCESSION_NUMBER, 10)
+	# Look at 10 random accession IDs
+	sample(vdf.ACCESSION_ID, 10)
 
 	# See accession number with typo (extra dash) ...
-	temp = filter(x -> !ismissing(x) && first(x,4) == "RI--", vdf.ACCESSION_NUMBER)
+	temp = filter(x -> !ismissing(x) && first(x,4) == "RI--", vdf.ACCESSION_ID)
 	# ... And see that it doesn't appear in the gisaid data
-	filter(:ACCESSION_NUMBER => x -> !ismissing(x) && x == temp, gdf)
+	filter(:ACCESSION_ID => x -> !ismissing(x) && x == temp, gdf)
 
 	# Compare sets of column names
 	x = names(vdf);
@@ -235,7 +242,7 @@ if(RUN_EXAMPLES)
 	y[y.∉Ref(x)] # Dictionary entries not found in the variants columns
 
 	# Verify that accession numbers map to a single unique row in the variant data
-	unique(1:length(jdf.ACCESSION_NUMBER) .|> y->filter(:ACCESSION_NUMBER => x-> !ismissing(x) && x==jdf.ACCESSION_NUMBER[y], vdf) |> nrow) == [1]
+	unique(1:length(jdf.ACCESSION_ID) .|> y->filter(:ACCESSION_ID => x-> !ismissing(x) && x==jdf.ACCESSION_ID[y], vdf) |> nrow) == [1]
 
 	# Find any person IDs that occur more than once
 	filter(x->last(x)>1, countmap(jdf.IDL_PERSON_ID))
