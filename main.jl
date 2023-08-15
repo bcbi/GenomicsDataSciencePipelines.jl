@@ -128,8 +128,9 @@ println()
 
 Plots.savefig(Plots.histogram(jdf.IDL_SPECIMEN_COLLECTION_DATE, bins=80), "collection_dates.png")
 
+# Based on https://www.generic-mapping-tools.org/GMTjl_doc/tutorials/dlakelan/GMTMaps/
 function RI_plot(DATA, COLOR, FILENAME, TITLE)
-
+	
 	cpop = CSV.File(joinpath(map_dir, "zips.csv"), types=Dict(:ZIP=>String)) |> DataFrame
 	cpop.PLOT_VALUE = cpop.ZIP .|> x -> get(DATA |> eachrow |> Dict, x, 0) |> Float64
 	# Downloaded from https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
